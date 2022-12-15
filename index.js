@@ -35,7 +35,7 @@ app.get("/api/categories", (req, res) => {
 app.get("/api/:category_id/recipes", (req, res) => {
   const { category_id } = req.params;
   pool
-    .query(`SELECT (id, title, image) FROM recipe WHERE category_id=$1`, [
+    .query(`SELECT id, title, image FROM recipe WHERE category_id=$1`, [
       category_id,
     ])
     .then((data) => res.json(data.rows))
@@ -63,6 +63,33 @@ app.get("/api/recipe/:recipe_id", (req, res) => {
         WHERE recipe.id=$1 AND recipe_ingredients.recipe_id=recipe.id AND recipe_ingredients.ingredient_id=ingredient.id
         GROUP BY recipe.id`,
       [recipe_id]
+    )
+    .then((data) => res.json(data.rows))
+    .catch((err) => {
+      console.log(err.message);
+      res.sendStatus(404);
+    });
+});
+
+// SELECT * FROM recipe_ingredients
+// INNER JOIN ingredient ON ingredient.id = recipe_ingredients.ingredient_id
+// INNER JOIN recipe ON recipe.id = recipe_ingredients.recipe_id AND recipe.id=1
+
+// GET /api/allrecipes  : to get all recipes in database
+app.get("/api/allrecipes", (req, res) => {
+  pool
+    .query(
+      `SELECT 
+        recipe.id, 
+        recipe.title,
+        recipe.image, 
+        recipe.rating, 
+        recipe.instructions, 
+        array_to_json(array_agg(json_build_object('amount', recipe_ingredients.amount, 'ingredient', ingredient.name))) AS ingredients
+        FROM 
+        recipe, recipe_ingredients, ingredient
+        WHERE recipe_ingredients.ingredient_id=ingredient.id
+        GROUP BY recipe.id`
     )
     .then((data) => res.json(data.rows))
     .catch((err) => {
