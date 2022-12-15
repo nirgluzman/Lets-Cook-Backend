@@ -48,11 +48,20 @@ app.get("/api/:category_id/recipes", (req, res) => {
 // GET /api/recipe/:recipe_id  : to get full data of a recipe_id
 app.get("/api/recipe/:recipe_id", (req, res) => {
   const { recipe_id } = req.params;
+
   pool
     .query(
-      `SELECT recipe_ingredients.amount, ingredient.name FROM recipe_ingredients
-      INNER JOIN ingredient
-      ON recipe_ingredients.recipe_id=$1 AND recipe_ingredients.ingredient_id=ingredient.id`,
+      `SELECT 
+        recipe.id, 
+        recipe.title,
+        recipe.image, 
+        recipe.rating, 
+        recipe.instructions, 
+        array_to_json(array_agg(json_build_object('amount', recipe_ingredients.amount, 'ingredient', ingredient.name))) AS ingredients
+        FROM 
+        recipe, recipe_ingredients, ingredient
+        WHERE recipe.id=$1 AND recipe_ingredients.recipe_id=recipe.id AND recipe_ingredients.ingredient_id=ingredient.id
+        GROUP BY recipe.id`,
       [recipe_id]
     )
     .then((data) => res.json(data.rows))
