@@ -85,7 +85,7 @@ app.get("/api/allrecipes", (req, res) => {
         recipe.image, 
         recipe.rating, 
         recipe.instructions, 
-        array_to_json(array_agg(json_build_object('amount', recipe_ingredients.amount, 'ingredient', ingredient.name))) AS ingredients
+        array_to_json(array_agg(json_build_object('amount', recipe_ingredients.amount, 'name', ingredient.name))) AS ingredients
         FROM 
         recipe, recipe_ingredients, ingredient
         WHERE recipe_ingredients.ingredient_id=ingredient.id
